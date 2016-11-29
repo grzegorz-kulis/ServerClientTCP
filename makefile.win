@@ -1,0 +1,11 @@
+server: lisek-server.o thread.o
+	gcc -pthread -o server lisek-server.o thread.o
+
+thread.o: thread.c thread.h
+	gcc -pthread -c thread.c
+
+lisek-server.o: lisek-server.c thread.h
+	gcc -pthread -c lisek-server.c
+
+clean:
+	rm -f *.o server
