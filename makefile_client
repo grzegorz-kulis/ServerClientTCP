@@ -1,8 +1,27 @@
-client: lisek-client.o
-	gcc -o client lisek-client.o
+CC=gcc
 
-lisek-client.o: lisek-client.c thread.h
-	gcc -c lisek-client.c
+OBJ_DIR=bin
+SRC_DIR=src
+DEP_DIR=include
+
+MKDIR_P=@mkdir -p $(@D)
+
+SRCS=$(SRC_DIR)/lisek-client.c
+OBJS=$(OBJ_DIR)/lisek-client.o
+DEPS=$(DEP_DIR)/thread.h
+
+TARGET=client
+
+$(OBJ_DIR)/$(TARGET): $(OBJS)
+	$(MKDIR_P)
+	$(CC) -o $@ $^
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
+	$(MKDIR_P)
+	$(CC) -c $< -o $@
+
+.PHONY: clean
 
 clean:
-	rm -f *.o client
+	rm -f $(OBJ_DIR)/$(TARGET)
+	rm -f $(OBJS)

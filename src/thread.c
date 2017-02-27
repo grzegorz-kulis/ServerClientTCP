@@ -13,12 +13,10 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-#include "thread.h"
+#include "../include/thread.h"
 
-#define MAX_SIZE 10000
-
-extern struct Thread *head_thread;
-extern volatile sig_atomic_t do_shutdown;
+//extern struct Thread *head_thread;
+//extern volatile sig_atomic_t do_shutdown;
 
 char output[MAX_SIZE];
 FILE *fp;

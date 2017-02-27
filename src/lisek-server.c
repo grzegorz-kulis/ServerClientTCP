@@ -12,12 +12,12 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-#include "thread.h"
+#include "../include/thread.h"
 
 #define PORT_NUMBER 12345
 
 int thread_number = 0;
-struct Thread *head_thread = NULL; //list of threads
+extern struct Thread *head_thread; //list of threads
 pthread_mutex_t list_thread = PTHREAD_MUTEX_INITIALIZER; //access list of threads
 const char *program_name;
 

@@ -1,11 +1,27 @@
-server: lisek-server.o thread.o
-	gcc -pthread -o server lisek-server.o thread.o
+CC=gcc
 
-thread.o: thread.c thread.h
-	gcc -pthread -c thread.c
+OBJ_DIR=bin
+SRC_DIR=src
+DEP_DIR=include
 
-lisek-server.o: lisek-server.c thread.h
-	gcc -pthread -c lisek-server.c
+MKDIR_P=@mkdir -p $(@D)
+
+SRCS=$(SRC_DIR)/lisek-server.c
+OBJS=$(OBJ_DIR)/lisek-server.o $(OBJ_DIR)/thread.o
+DEPS=$(DEP_DIR)/thread.h
+
+TARGET=server
+
+$(OBJ_DIR)/$(TARGET): $(OBJS)
+	$(MKDIR_P)
+	$(CC) -pthread -o $@ $^
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
+	$(MKDIR_P)
+	$(CC) -pthread -c $< -o $@ 
+
+.PHONY: clean
 
 clean:
-	rm -f *.o server
+	rm -f $(OBJ_DIR)/$(TARGET)
+	rm -f $(OBJS)

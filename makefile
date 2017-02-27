@@ -1,10 +1,15 @@
-all: win nix
+.PHONY: all
 
-win:
-	make -f makefile.win
+all: client server
 
-nix:
-	make -f makefile.nix
+client:
+	make -f makefile_client
+
+server:
+	make -f makefile_server
+
+.PHONY: clean
 
 clean:
-	rm -f server.o client.o
+	make -f makefile_client clean
+	make -f makefile_server clean
