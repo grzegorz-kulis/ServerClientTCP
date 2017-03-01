@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 
 #define MAX_THREADS 512
-#define MAX_SIZE 10000
+#define MAX_SIZE 9999
 
 char cwd[1024];
 struct Thread* head_thread;

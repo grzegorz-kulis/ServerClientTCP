@@ -6,9 +6,8 @@ DEP_DIR=include
 
 MKDIR_P=@mkdir -p $(@D)
 
-SRCS=$(SRC_DIR)/lisek-client.c
-OBJS=$(OBJ_DIR)/lisek-client.o
-DEPS=$(DEP_DIR)/thread.h
+SRCS=$(SRC_DIR)/lisek-client.c $(SRC_DIR)/client_help.c
+OBJS=$(OBJ_DIR)/lisek-client.o $(OBJ_DIR)/client_help.o
 
 TARGET=client
 
@@ -16,7 +15,7 @@ $(OBJ_DIR)/$(TARGET): $(OBJS)
 	$(MKDIR_P)
 	$(CC) -o $@ $^
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEPS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(MKDIR_P)
 	$(CC) -c $< -o $@
 
