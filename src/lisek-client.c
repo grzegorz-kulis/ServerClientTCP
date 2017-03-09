@@ -12,6 +12,16 @@
 
 #define MAX_SIZE 9999
 
+typedef struct MsgParts {
+  char* part1;
+  char* part2;
+  char* part3;
+  char* part4;
+  char* part5;
+} MsgParts;
+
+const char space[] = " \n\0"; //used to extract proper message on client side
+ 
 static void send_message(int socket_fd, const char *msg) {
 
   int rc;
@@ -26,10 +36,46 @@ static void send_message(int socket_fd, const char *msg) {
 
 }
 
+void prepare_tokens(char* msg, MsgParts msgp) {
+   char* fix = strtok(msg,space);
+
+  while(fix != NULL) {
+    short partNum = 0;
+    if(partNum == 0) {
+      msgp.part1 = fix;
+      fix = strtok(NULL,space);
+    }
+    if(partNum == 1) {
+      msgp.part2 = fix;
+      fix = strtok(NULL,space);
+    }
+    if(partNum == 2) {
+      msgp.part3 = fix;
+      fix = strtok(NULL,space);
+    }
+    if(partNum == 3) {
+      msgp.part4 = fix;
+      fix = strtok(NULL,space);
+    }
+    if(partNum == 4) {
+      msgp.part5 = fix;
+      fix = strtok(NULL,space);
+    }
+    partNum++;
+  }
+}
+
+void send_file() {
+
+}
+
+void download_file() {
+
+}
+
 int main(int argc, char* argv[])
 {
   const char* program_name = argv[0];
-  const char space[] = " \n\0";
   const int port_number = 12345; 
   int socket_fd, rc;
   struct sockaddr_in serv_addr;
@@ -85,7 +131,8 @@ int main(int argc, char* argv[])
     }
 
     /**
-    * Check if we get proper message from the server so we can start communicating. While booting, we assume that server is in the INIT_STATE.
+    * Check if we get proper message from the server so we can start communicating.
+    * While booting, we assume that server is in the INIT_STATE.
     */
     if(serv_state == INIT_STATE) {
       char *msg = strtok(buffer,"\n");
@@ -111,46 +158,28 @@ int main(int argc, char* argv[])
       fgets(buffer, sizeof(buffer)/sizeof(buffer[0]) - 1, stdin);
 
       /** 
-      * Gather tokens from the message which the user typed in so we can handle partial work of the commands
-       */
-      char *temp = (char*) malloc(strlen(buffer)+1);
-      strcpy(temp, buffer);
-      char *fix = strtok(temp,space);
-      char *part1;
-      char *part2;
-      char *part3;
-      char *part4;
-      int flag = 0;
-      while(fix != NULL) {
-        if(flag == 0) {
-          part1 = fix;
-          fix = strtok(NULL,space);
-        }
-	if(flag == 1) {
-          part2 = fix;
-          fix = strtok(NULL,space);
-        }
-	if(flag == 2) {
-          part3 = fix;
-          fix = strtok(NULL,space);
-        }
-	if(flag == 3) {
-          part4 = fix;
-          fix = strtok(NULL,space);
-        }
-	flag++;
-      }
-      flag = 0;
- 
+      * Gather tokens from the message which the user typed in. 
+      * This allows to handle partial work on the client side. 
+      */
+      char* message = (char*) malloc(strlen(buffer)+1);
+      strcpy(message, buffer); 
+
+      MsgParts userCommand;
+
+      prepare_tokens(message, userCommand);
+
+      free(message);
+      
       //Send a file
-      if(strcmp(part1, "scp") == 0) {
+      //send_file();
+      if(strcmp(userCommand.part1, "scp") == 0) {
 
         FILE *fp;
         size_t nbytes;
         char file_buf[MAX_SIZE];
 	char scp_buffer[MAX_SIZE];
 
-        fp = fopen(part2, "r");
+        fp = fopen(userCommand.part2, "r");
 
 	if(fp != NULL) {
           nbytes = fread(file_buf, 1, MAX_SIZE, fp);
@@ -160,9 +189,9 @@ int main(int argc, char* argv[])
 
         //Build a proper info to the server 
 	if(nbytes > 0) {
-          strcpy(scp_buffer, part1);
+          strcpy(scp_buffer, userCommand.part1);
           strcat(scp_buffer, " ");
-          strcat(scp_buffer, part3);
+          strcat(scp_buffer, userCommand.part3);
           strcat(scp_buffer, " ");
           strcat(scp_buffer, file_buf);
           send_message(socket_fd, scp_buffer);
@@ -171,11 +200,12 @@ int main(int argc, char* argv[])
 	
       }
       //Download a file
-      else if(strcmp(part1, "wget") == 0) {
+      //download_file();
+      else if(strcmp(userCommand.part1, "wget") == 0) {
 
         send_message(socket_fd, buffer);
 	
-	FILE *fd = fopen(part3, "w");
+	FILE *fd = fopen(userCommand.part3, "w");
 
         memset(buffer, 0, sizeof(buffer));
         rc = recv(socket_fd, buffer, sizeof(buffer), 0);
