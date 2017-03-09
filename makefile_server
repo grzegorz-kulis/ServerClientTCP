@@ -6,8 +6,8 @@ DEP_DIR=include
 
 MKDIR_P=@mkdir -p $(@D)
 
-SRCS=$(SRC_DIR)/lisek-server.c
-OBJS=$(OBJ_DIR)/lisek-server.o $(OBJ_DIR)/thread.o
+SRCS=$(SRC_DIR)/server.c
+OBJS=$(OBJ_DIR)/server.o $(OBJ_DIR)/thread.o
 DEPS=$(DEP_DIR)/thread.h
 
 TARGET=server

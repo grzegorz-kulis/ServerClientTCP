@@ -10,19 +10,9 @@
 #include <errno.h>
 #include <getopt.h>
 
-#define MAX_SIZE 9999
+#include "../include/client.h"
 
-typedef struct MsgParts {
-  char* part1;
-  char* part2;
-  char* part3;
-  char* part4;
-  char* part5;
-} MsgParts;
-
-const char space[] = " \n\0"; //used to extract proper message on client side
- 
-static void send_message(int socket_fd, const char *msg) {
+static void send_message(const int socket_fd, const char* msg) {
 
   int rc;
   int message_size = strlen(msg);
@@ -33,50 +23,91 @@ static void send_message(int socket_fd, const char *msg) {
       abort();
     }
   } while(rc < message_size);
-
 }
 
-void prepare_tokens(char* msg, MsgParts msgp) {
-   char* fix = strtok(msg,space);
+void prepare_tokens(char* msg, MsgParts* msgp) {
+  char* fix = strtok(msg,token_IgnoreSigns);
 
   while(fix != NULL) {
-    short partNum = 0;
+    int partNum = 0;
     if(partNum == 0) {
-      msgp.part1 = fix;
-      fix = strtok(NULL,space);
+      msgp->part1 = fix;
+      fix = strtok(NULL,token_IgnoreSigns);
     }
     if(partNum == 1) {
-      msgp.part2 = fix;
-      fix = strtok(NULL,space);
+      msgp->part2 = fix;
+      fix = strtok(NULL,token_IgnoreSigns);
     }
     if(partNum == 2) {
-      msgp.part3 = fix;
-      fix = strtok(NULL,space);
+      msgp->part3 = fix;
+      fix = strtok(NULL,token_IgnoreSigns);
     }
     if(partNum == 3) {
-      msgp.part4 = fix;
-      fix = strtok(NULL,space);
+      msgp->part4 = fix;
+      fix = strtok(NULL,token_IgnoreSigns);
     }
     if(partNum == 4) {
-      msgp.part5 = fix;
-      fix = strtok(NULL,space);
+      msgp->part5 = fix;
+      fix = strtok(NULL,token_IgnoreSigns);
     }
     partNum++;
   }
 }
 
-void send_file() {
+void send_file(const int* socket_fd, const MsgParts* userCommand) {
 
+  size_t nbytes;
+  char file_buf[MAX_SIZE];
+  char scp_buffer[MAX_SIZE];
+
+  FILE *fp = fopen(userCommand->part2, "r");
+
+  if(fp != NULL) {
+    nbytes = fread(file_buf, 1, MAX_SIZE, fp);
+  }
+  else
+    perror("Error reading file");
+
+  //Build a proper info to the server 
+  if(nbytes > 0) {
+    strcpy(scp_buffer, userCommand->part1);
+    strcat(scp_buffer, " ");
+    strcat(scp_buffer, userCommand->part3);
+    strcat(scp_buffer, " ");
+    strcat(scp_buffer, file_buf);
+    send_message(*socket_fd, scp_buffer);
+  }
+  fclose(fp);
 }
 
-void download_file() {
+void download_file(const int* socket_fd,
+	       	const MsgParts* userCommand, char* buffer) {	
+  
+  int rc;
+  
+  send_message(*socket_fd, buffer);
+	
+  FILE *fd = fopen(userCommand->part3, "w");
 
+  memset(buffer, 0, sizeof(buffer));
+  rc = recv(*socket_fd, buffer, sizeof(buffer), 0);
+  if(rc<0) {
+    perror("Error reading back from server");
+    exit(1);
+  }
+  else if(rc == 0) {
+    printf("The server has been disconnected. Quitting.\n");
+    exit(0);
+  }
+
+  fwrite(buffer, sizeof(char), strlen(buffer), fd);
+  fclose(fd);
+  printf("Done downloading\n");	
 }
 
 int main(int argc, char* argv[])
 {
   const char* program_name = argv[0];
-  const int port_number = 12345; 
   int socket_fd, rc;
   struct sockaddr_in serv_addr;
   struct hostent *server;
@@ -164,65 +195,21 @@ int main(int argc, char* argv[])
       char* message = (char*) malloc(strlen(buffer)+1);
       strcpy(message, buffer); 
 
-      MsgParts userCommand;
+      MsgParts userCommand = {NULL, NULL, NULL, NULL, NULL};
+      MsgParts* userCommand_p = &userCommand;
 
-      prepare_tokens(message, userCommand);
+      prepare_tokens(message, userCommand_p);
 
       free(message);
-      
+
       //Send a file
-      //send_file();
       if(strcmp(userCommand.part1, "scp") == 0) {
-
-        FILE *fp;
-        size_t nbytes;
-        char file_buf[MAX_SIZE];
-	char scp_buffer[MAX_SIZE];
-
-        fp = fopen(userCommand.part2, "r");
-
-	if(fp != NULL) {
-          nbytes = fread(file_buf, 1, MAX_SIZE, fp);
-        }
-	else
-	  perror("Error reading file");
-
-        //Build a proper info to the server 
-	if(nbytes > 0) {
-          strcpy(scp_buffer, userCommand.part1);
-          strcat(scp_buffer, " ");
-          strcat(scp_buffer, userCommand.part3);
-          strcat(scp_buffer, " ");
-          strcat(scp_buffer, file_buf);
-          send_message(socket_fd, scp_buffer);
-        }
-	fclose(fp);	
-	
+        send_file(&socket_fd, userCommand_p);
       }
+
       //Download a file
-      //download_file();
       else if(strcmp(userCommand.part1, "wget") == 0) {
-
-        send_message(socket_fd, buffer);
-	
-	FILE *fd = fopen(userCommand.part3, "w");
-
-        memset(buffer, 0, sizeof(buffer));
-        rc = recv(socket_fd, buffer, sizeof(buffer), 0);
-        if(rc<0) {
-          perror("Error reading back from server");
-          exit(1);
-        }
-        else if(rc == 0) {
-          printf("The server has been disconnected. Quitting.\n");
-          exit(0);
-        }
-
-	fwrite(buffer, sizeof(char), strlen(buffer), fd);
-	fclose(fd);
-	printf("Done downloading\n");
-	
-	
+	download_file(&socket_fd, userCommand_p, buffer);
       }
       else {
         int len = strlen(buffer);

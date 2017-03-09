@@ -27,10 +27,10 @@ void print_usage(FILE* stream, int exit_code)
 {
   fprintf(stream, "Usage: %s options [ inputfile ]\n", program_name);
   fprintf(stream,
-          "  -h  --help       Display this usage information\n"
-	  "  Run `make` command to build both the server and client applications\n"
-	  "  Run `makefile -f makefile.win` to build only server application\n"
-	  "  Type `./server` into terminal to start the server and wait for the client to connect\n\n");
+      "  -h  --help       Display this usage information\n"
+      "  Run `make` command to build both the server and client applications\n"
+      "  Run `makefile -f makefile.win` to build only server application\n"
+      "  Type `./server` into terminal to start the server and wait for the client to connect\n\n");
   exit(exit_code);
 }
 
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     next_option = getopt_long(argc, argv, short_options, long_options, NULL);
 
     switch(next_option)
-      {
+    {
       case 'h':
 	print_usage(stdout,0);
 
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
       default:
 	abort();
 
-      }
+    }
 
   } while(next_option != -1);
 
@@ -82,14 +82,14 @@ int main(int argc, char* argv[])
     fprintf(stdout, "Current working dir: %s\n", cwd);
   else
     perror("getcwd() error");
-  
+
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if(socket_fd < 0) {
-      perror("Error opening socket!");
-      exit(1);
+    perror("Error opening socket!");
+    exit(1);
   }
-  
+
   if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) < 0)
     error("setsockopt(SO_REUSEADDR) failed");
 
@@ -101,8 +101,8 @@ int main(int argc, char* argv[])
 
   /* Binding */
   if(bind(socket_fd, (struct sockaddr *) &serv_addr,  sizeof(serv_addr)) < 0) {
-       perror("Error on binding!");
-       exit(1);
+    perror("Error on binding!");
+    exit(1);
   }
 
   const int thread_pool_step = 10;
@@ -131,34 +131,34 @@ int main(int argc, char* argv[])
 
   while(!do_shutdown) {
 
-      client_socket_fd = 
-	accept(socket_fd, (struct sockaddr*) (&cli_addr), &client_length);
+    client_socket_fd = 
+      accept(socket_fd, (struct sockaddr*) (&cli_addr), &client_length);
 
-      if(client_socket_fd < 0) {
-        fprintf(stderr, "accept() failed: %s\n", strerror(errno));
-        break;
+    if(client_socket_fd < 0) {
+      fprintf(stderr, "accept() failed: %s\n", strerror(errno));
+      break;
+    }
+
+    /* Arguments for thread */
+    new_sock = malloc(sizeof(client_socket_fd));
+    *new_sock = client_socket_fd;
+
+    if(++thread_index >= thread_pool_size) {
+      thread_pool_size += thread_pool_step;
+      thread_ids = realloc(thread_ids, thread_pool_size*sizeof(pthread_t));
+      if(thread_ids == NULL) {
+	fprintf(stderr, "failed to realloc thread pool: %s\n", strerror(errno));
+	abort();
       }
+    }
 
-      /* Arguments for thread */
-      new_sock = malloc(sizeof(client_socket_fd));
-      *new_sock = client_socket_fd;
-
-      if(++thread_index >= thread_pool_size) {
-	thread_pool_size += thread_pool_step;
-	thread_ids = realloc(thread_ids, thread_pool_size*sizeof(pthread_t));
-	if(thread_ids == NULL) {
-	  fprintf(stderr, "failed to realloc thread pool: %s\n", strerror(errno));
-	  abort();
-	}
-      }
-
-      /* Create new thread for a newly connected client */
-      if(pthread_create(&thread_ids[thread_index++], NULL, handle_connection,
-			(void*) new_sock)) 
-      {
-        fprintf(stderr, "pthread_create() failed: %s\n", strerror(errno));
-	abort;
-      }
+    /* Create new thread for a newly connected client */
+    if(pthread_create(&thread_ids[thread_index++], NULL, handle_connection,
+	  (void*) new_sock)) 
+    {
+      fprintf(stderr, "pthread_create() failed: %s\n", strerror(errno));
+      abort;
+    }
   }
 
   puts("Waiting for threads to finish");
