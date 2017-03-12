@@ -30,12 +30,12 @@ struct Thread {
 };
 
 void prepare_tokens(char*, MsgParts*);
-void handle_ls();
-void handle_cd();
-void handle_cp();
-void handle_mv();
-void handle_scp();
-void handle_wget();
+void handle_ls(const int* , const char* , char* );
+void handle_cd(const int* , const MsgParts*);
+void handle_cp(const int* , const MsgParts*);
+void handle_mv(const int* , const MsgParts*);
+void handle_scp(const int* , const MsgParts*);
+void handle_wget(const int*);
 void* handle_connection(void*);
 short insert_thread();
 void remove_thread(short);

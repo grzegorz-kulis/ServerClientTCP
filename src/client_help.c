@@ -1,17 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <pthread.h>
-#include <signal.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <getopt.h>
 
-void handle_options(int argc, char* argv[], const char* pn);
-void print_usage(FILE* stream, int exit_code, const char* pn);
+void handle_options(int , char* [] , const char*);
+void print_usage(FILE* , int , const char* );
 
 /**
 * Handles options given at the start-up of the program

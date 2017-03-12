@@ -20,16 +20,16 @@ static void send_message(const int socket_fd, const char* msg) {
     rc = send(socket_fd, msg, message_size, 0);
     if(rc < 0) {
       fprintf(stderr, "send() failed: %s\n", strerror(errno));
-      abort();
+      exit(EXIT_FAILURE);
     }
   } while(rc < message_size);
 }
 
 void prepare_tokens(char* msg, MsgParts* msgp) {
   char* fix = strtok(msg,token_IgnoreSigns);
-
+  int partNum = 0;
+  
   while(fix != NULL) {
-    int partNum = 0;
     if(partNum == 0) {
       msgp->part1 = fix;
       fix = strtok(NULL,token_IgnoreSigns);
@@ -83,21 +83,19 @@ void send_file(const int* socket_fd, const MsgParts* userCommand) {
 void download_file(const int* socket_fd,
 	       	const MsgParts* userCommand, char* buffer) {	
   
-  int rc;
-  
   send_message(*socket_fd, buffer);
 	
   FILE *fd = fopen(userCommand->part3, "w");
 
   memset(buffer, 0, sizeof(buffer));
-  rc = recv(*socket_fd, buffer, sizeof(buffer), 0);
+  int rc = recv(*socket_fd, buffer, sizeof(buffer), 0);
   if(rc<0) {
     perror("Error reading back from server");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   else if(rc == 0) {
     printf("The server has been disconnected. Quitting.\n");
-    exit(0);
+    exit(EXIT_SUCCESS);
   }
 
   fwrite(buffer, sizeof(char), strlen(buffer), fd);
@@ -117,7 +115,7 @@ int main(int argc, char* argv[])
 
   if(argc<2) {
     fprintf(stderr,"Incorrect arguments input\n");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   server = gethostbyname(argv[1]);
@@ -125,19 +123,19 @@ int main(int argc, char* argv[])
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   if(socket_fd < 0) {
     perror("Error opening socket\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   bzero((char*) &serv_addr, sizeof(serv_addr));
   serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(port_number);
+  serv_addr.sin_port = htons(PORT_NUMBER);
   bcopy((char*) server->h_addr,
 	(char *) &serv_addr.sin_addr.s_addr,
 	sizeof(server->h_length));
 
   if(connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
       perror("Error connecting\n");
-      exit(1);
+      exit(EXIT_FAILURE);
   }
 
   enum {
@@ -154,11 +152,11 @@ int main(int argc, char* argv[])
     rc = recv(socket_fd, buffer, sizeof(buffer), 0);
     if(rc<0) {
       perror("Error reading back from server.\n");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     else if(rc == 0) {
       printf("The server has been disconnected. Quitting.\n");
-      exit(0);
+      exit(EXIT_SUCCESS);
     }
 
     /**
@@ -199,7 +197,13 @@ int main(int argc, char* argv[])
       MsgParts* userCommand_p = &userCommand;
 
       prepare_tokens(message, userCommand_p);
-
+      /*    
+      printf("userCommand.part1 = %s\n", userCommand.part1);
+      printf("userCommand.part2 = %s\n", userCommand.part2);
+      printf("userCommand.part3 = %s\n", userCommand.part3);
+      printf("userCommand.part4 = %s\n", userCommand.part4);
+      printf("userCommand.part5 = %s\n", userCommand.part5);
+      */
       free(message);
 
       //Send a file
@@ -216,8 +220,8 @@ int main(int argc, char* argv[])
         if(buffer[len-1] == '\n') {
 	  buffer[len-1] = '\0';
         }
+	printf("sent message: %s\n", buffer);
 	send_message(socket_fd, buffer);
-	  
       }
   }
    

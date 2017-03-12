@@ -13,26 +13,13 @@
 #include <netinet/in.h>
 
 #include "../include/thread.h"
+#include "../include/server.h"
 
-#define PORT_NUMBER 12345
-
-int thread_number = 0;
 extern struct Thread *head_thread; //list of threads
 pthread_mutex_t list_thread = PTHREAD_MUTEX_INITIALIZER; //access list of threads
 const char *program_name;
 
 volatile sig_atomic_t do_shutdown = 0;
-
-void print_usage(FILE* stream, int exit_code)
-{
-  fprintf(stream, "Usage: %s options [ inputfile ]\n", program_name);
-  fprintf(stream,
-      "  -h  --help       Display this usage information\n"
-      "  Run `make` command to build both the server and client applications\n"
-      "  Run `makefile -f makefile.win` to build only server application\n"
-      "  Type `./server` into terminal to start the server and wait for the client to connect\n\n");
-  exit(exit_code);
-}
 
 static void sigterm_handler(int sig)
 {
@@ -42,10 +29,7 @@ static void sigterm_handler(int sig)
 
 int main(int argc, char* argv[])
 {
-  const char* const short_options = "h";
-  const struct option long_options[] = {
-    { "help", 0, NULL, 'h'}
-  };
+  const char* program_name = argv[0];
   struct sockaddr_in serv_addr;
   struct sockaddr_in cli_addr;
   int socket_fd;
@@ -57,26 +41,8 @@ int main(int argc, char* argv[])
 
   program_name = argv[0];
 
-  do {
-    next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-
-    switch(next_option)
-    {
-      case 'h':
-	print_usage(stdout,0);
-
-      case '?':
-	print_usage(stderr,1);
-
-      case -1:
-	break;
-
-      default:
-	abort();
-
-    }
-
-  } while(next_option != -1);
+  /* Handle options menu */
+  handle_options(argc, argv, program_name);
 
   if(getcwd(cwd, sizeof(cwd)) !=  NULL)
     fprintf(stdout, "Current working dir: %s\n", cwd);

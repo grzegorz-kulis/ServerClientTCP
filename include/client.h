@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #define MAX_SIZE 9999
+#define PORT_NUMBER 12345
 
 typedef struct MsgParts {
   char* part1;
@@ -12,8 +13,6 @@ typedef struct MsgParts {
 } MsgParts;
 
 const char token_IgnoreSigns[] = " \n\0"; //used to extract proper message on client side
-const int port_number = 12345; 
-
 
 static void send_message(const int , const char*);
 void prepare_tokens(char* , MsgParts*);

@@ -6,9 +6,9 @@ DEP_DIR=include
 
 MKDIR_P=@mkdir -p $(@D)
 
-SRCS=$(SRC_DIR)/server.c
-OBJS=$(OBJ_DIR)/server.o $(OBJ_DIR)/thread.o
-DEPS=$(DEP_DIR)/thread.h
+SRCS=$(SRC_DIR)/server.c $(SRC_DIR)/thread.c $(SRC_DIR)/server_help.c
+OBJS=$(OBJ_DIR)/server.o $(OBJ_DIR)/thread.o $(OBJ_DIR)/server_help.o
+DEPS=$(DEP_DIR)/thread.h $(DEP_DIR)/server.h
 
 TARGET=server
 
