@@ -86,44 +86,31 @@ void handle_ls(const int* socket_fd, const char* input, char* output) {
 
 void handle_cd(const int* socket_fd, const MsgParts* userCommand) {
 
-  /* Go on directory up */
+  char cwd[1024];
+  /* Go one directory up */
   if(strcmp(userCommand->part2, "..") == 0) {
     chdir(userCommand->part2);
-    if(getcwd(cwd, sizeof(cwd)) != NULL) {
-      /* Char array to char* */
-      char* temp = (char*)malloc(strlen(cwd)+1);
-      strcpy(temp, cwd);
 
-      int temp_size = strlen(temp) + strlen(current_dir) + 1 + 1;
-      char* msg  = (char*) malloc(temp_size);
-      strcpy(msg, current_dir);
-      strcat(msg, temp);
-      strcat(msg, "\n");
+    if(getcwd(cwd, sizeof(cwd)) != NULL) {
+      char* msg = (char*)malloc(strlen(current_dir)+strlen(cwd)+1);
+      snprintf(msg, strlen(current_dir)+strlen(cwd)+1, "%s%s\n", current_dir, cwd);
       send_message(*socket_fd, msg);
-      free(temp);
       free(msg);
     }
     else
       perror("getcwd() error");
   }
-  /* change directory */
+
+  /* change to directory */
   else {
     struct stat sb;
     if(stat(userCommand->part2,&sb) == 0 && S_ISDIR(sb.st_mode))
     { 
       chdir(userCommand->part2);
       if(getcwd(cwd, sizeof(cwd)) != NULL) {
-	/* Char array to char* */
-	char* temp = (char*)malloc(strlen(cwd)+1);
-	strcpy(temp, cwd);
-
-	int temp_size = strlen(temp) + strlen(current_dir) + 1 + 1;
-	char* msg  = (char*) malloc(temp_size);
-	strcpy(msg, current_dir);
-	strcat(msg, temp);
-	strcat(msg, "\n");
+	char* msg = (char*)malloc(strlen(current_dir)+strlen(cwd)+1);
+	snprintf(msg, strlen(current_dir)+strlen(cwd)+1, "%s%s\n", current_dir, cwd);
 	send_message(*socket_fd, msg);
-	free(temp);
 	free(msg);
       } 
       else

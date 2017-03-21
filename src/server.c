@@ -38,6 +38,7 @@ int main(int argc, char* argv[])
   int *new_sock;
   int next_option;
   char buffer[256];
+  char cwd[1024];
 
   program_name = argv[0];
 
